@@ -1,0 +1,93 @@
+openapi: '3.0.3'
+info:
+  title: GreetingService
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+    description: Example service deployment.
+tags:
+  - name: greeting
+    description: Operations related to a greeting
+paths:
+  /greet:
+    get:
+      tags:
+        - greeting
+      operationId: getGreeting
+      summary: Get a greeting message
+      parameters:
+        - name: name
+          required: false
+          in: query
+          description: The name used in the greeting response
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A success response with a greeting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Greeting'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /reset:
+    delete:
+      tags:
+        - greeting
+      operationId: deletePeople
+      summary: Drop the people table
+      responses:
+        '204':
+          description: The people table was successfully dropped
+        default:
+          description: Unexpected error
+components:
+  schemas:
+    Greeting:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+    Error:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          description: Unique transaction identifier (UUID)
+        code:
+          type: string
+          description: Human-readable, server defined error code representing the overall error class
+        message:
+          type: string
+          description: Human-readable description of the error
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          description: Array of unique instances of error details
+      required:
+        - transactionId
+        - code
+        - message
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Human-readable, server defined error code representing the specific error
+        target:
+          type: string
+          description: JSON pointer to the field in error if in body, else name of the path or query parameter
+        description:
+          type: string
+          description: Human-readable description of the error
+      required:
+        - code
+        - description

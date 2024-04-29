@@ -1,0 +1,82 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.2.2'
+	id 'io.spring.dependency-management' version '1.1.4'
+	id 'org.hidetake.swagger.generator' version '2.19.2'
+}
+
+group = 'com.robertwalker'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '17'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+springBoot {
+	mainClass = "com.robertwalker.openapidemo.OpenapiDemoApplication"
+}
+
+dependencies {
+	// Spring Boot Starter
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// OpenApi code generation
+	swaggerCodegen 'org.openapitools:openapi-generator-cli:7.3.0'
+	implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
+
+	// SpringDoc (Swagger UI)
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+	// Microsoft Azure SDK (BOM)
+	implementation platform('com.azure:azure-sdk-bom:1.2.22')
+
+	// Microsoft Azure SDK
+	implementation 'com.azure:azure-data-tables'
+
+	// Project Lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// Testing Dependencies
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+processResources {
+	dependsOn(generateSwaggerCode)
+}
+
+swaggerSources {
+	greeting {
+		inputFile = file("${rootDir}/src/main/openapi/openapi.yaml")
+		code {
+			language = 'spring'
+			configFile = file("${rootDir}/src/main/openapi/config.json")
+			components = [
+			        models: true,
+					apis: true,
+					supportingFiles: 'ApiUtil.java'
+			]
+			dependsOn validation
+		}
+	}
+}
+
+compileJava.dependsOn swaggerSources.greeting.code
+sourceSets.main.java.srcDir "${swaggerSources.greeting.code.outputDir}/src/main/java"
+sourceSets.main.resources.srcDir "${swaggerSources.greeting.code.outputDir}/src/main/resources"
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
